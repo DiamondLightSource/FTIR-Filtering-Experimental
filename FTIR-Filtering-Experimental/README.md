@@ -1,1 +1,0 @@
-# FTIR-Filtering-Experimental
