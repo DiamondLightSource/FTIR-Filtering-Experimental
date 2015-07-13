@@ -9,14 +9,31 @@ import cmath as m
 class fft():
     def __init__(self):
         pass
-    def _zerofill(self,single):
+    def _zerofill(self,single,highfold,zerofill):
         single = single - np.mean(single) # eliminate offset of interferogram
-        if single.size < 16384:
-            single = np.concatenate((single,np.zeros(16384-single.size)))
-        else:
-            single = np.concatenate((single,np.zeros(2*16384-single.size)))
+        if 8192<single.size < 16384:
+            if highfold == 7899.4:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(16384-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(32768-single.size)))
+            if highfold == 15798.8:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(32768-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(65536-single.size)))
+        if single.size < 8192:
+            if highfold == 7899.4:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(8192-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(16384-single.size)))
+            if highfold == 15798.8:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(16384-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(32768-single.size)))
         return single
-    
     def _mertz(self,single):
         n = 256 # number of points to select for phase correction about ZPD point
         zeros = np.zeros(2*n)#make array of zeros of same length as the signal to be analysed
@@ -94,7 +111,7 @@ class fft():
         final = np.add(finalr,finali)
         self.apodr = apodr
         return final
-    def singleChannel(self,s,highf):
+    def singleChannel(self,s,highf,zerofill):
         ft =fft()
         """
         ###############################
@@ -122,10 +139,10 @@ class fft():
         """
         
         
-        single = s[:0.5*s.size] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
+        single = s[:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single)
+        single0 = ft._zerofill(single,highf,zerofill)
         self.sing = single0
         angles = ft._mertz(single0)
         
@@ -144,7 +161,7 @@ class fft():
         vbig = np.divide(kbig,lmda*np.size(single0))
         
         return schannel,v
-    def singleChannel2(self,s,highf):
+    def singleChannel2(self,s,highf,zerofill):
         ft =fft()
         """
         ###############################
@@ -175,7 +192,7 @@ class fft():
         single = s[0.5*s.size:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single)
+        single0 = ft._zerofill(single,highf,zerofill)
         
         angles = ft._mertz(single0)
         
@@ -192,18 +209,17 @@ class fft():
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft.singleChannel(s, highf)
+        schannel2 = ft.singleChannel(s[0.5*s.size:], highf,zerofill)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
         
         return final,v
-    def absorbance(self, schannel, refer,renergy):
-        b = np.add(schannel[1],-renergy[0])
-        b = np.abs(b)
-        a = -np.log10(np.divide(schannel[0][b.argmin():np.size(renergy)+b.argmin()],refer))
-        self.test = schannel[0][b.argmin():np.size(renergy)+b.argmin()]
-        return a
+    def absorbance(self, schannel, refer,highfold,zerofill):
+        ft =fft()
+        refer = ft.singleChannel2(refer,highfold,zerofill)
+        absorbance = -np.log10(schannel[0]/refer[0])
+        return absorbance[0:absorbance.size/2]
 class fftfilter(fft):
     def __init__(self):
         pass
@@ -228,7 +244,7 @@ class fftfilter(fft):
         self.blh = blh
         self.ap = apod_singler2
         return apod_singler2
-    def singleChannel(self,s,fw,fmin,highf,dv):
+    def singleChannel(self,s,fw,fmin,highf,dv,zerofill):
         ft =fft()
         ft2=fftfilter()
         """
@@ -271,7 +287,7 @@ class fftfilter(fft):
         single = s[:0.5*s.size] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single)
+        single0 = ft._zerofill(single,highf,zerofill)
         
         angles = ft._mertz(single0)
         
@@ -292,7 +308,7 @@ class fftfilter(fft):
         vbig = np.divide(kbig,lmda*np.size(single0))
         
         return schannel,v
-    def singleChannel2(self,s,fw,fmin,highf,dv):
+    def singleChannel2(self,s,fw,fmin,highf,dv,zerofill):
         ft =fft()
         ft2 = fftfilter()
         """
@@ -337,7 +353,7 @@ class fftfilter(fft):
         single = s[0.5*s.size:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single)
+        single0 = ft._zerofill(single,highf,zerofill)
         
         angles = ft._mertz(single0)
         
@@ -356,7 +372,7 @@ class fftfilter(fft):
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft2.singleChannel(s, fw, fmin, highf, dv)
+        schannel2 = ft2.singleChannel(s, fw, fmin, highf, dv,zerofill)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
