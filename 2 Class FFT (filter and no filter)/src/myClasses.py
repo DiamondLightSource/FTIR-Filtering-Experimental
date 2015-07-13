@@ -11,33 +11,35 @@ class fft():
         pass
     def _zerofill(self,single,highfold,zerofill):
         single = single - np.mean(single) # eliminate offset of interferogram
-        if 8192<single.size < 16384:
-            if highfold == 7899.4:
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(16384-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(32768-single.size)))
-            if highfold == 15798.8:
+        if 16384<single.size < 32768:
+        
                 if zerofill < 4:
                     single = np.concatenate((single,np.zeros(32768-single.size)))
                 if zerofill == 4:
                     single = np.concatenate((single,np.zeros(65536-single.size)))
-        if single.size < 8192:
-            if highfold == 7899.4:
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(8192-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(16384-single.size)))
-            if highfold == 15798.8:
+        
+        if 8192<single.size < 16384:
+        
                 if zerofill < 4:
                     single = np.concatenate((single,np.zeros(16384-single.size)))
                 if zerofill == 4:
                     single = np.concatenate((single,np.zeros(32768-single.size)))
+        
+        if 4096<single.size < 8192:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(8192-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(16384-single.size)))
+        
+        if single.size < 4096:
+                if zerofill < 4:
+                    single = np.concatenate((single,np.zeros(4096-single.size)))
+                if zerofill == 4:
+                    single = np.concatenate((single,np.zeros(8192-single.size)))
         return single
     def _mertz(self,single):
         n = 256 # number of points to select for phase correction about ZPD point
-        zeros = np.zeros(2*n)#make array of zeros of same length as the signal to be analysed
-        zeros[:] = single[np.argmax(single)-n:np.argmax(single)+n]
+        zeros = single[single.argmax()-n:single.argmax()+n]
         #ramp function (ramp is old triangular fcn, better to use the Black Harris 3 step fct w[t] )
         ramp = np.zeros(2*n)
         ramp[0:n] = np.linspace(0,1,n,endpoint=False)
