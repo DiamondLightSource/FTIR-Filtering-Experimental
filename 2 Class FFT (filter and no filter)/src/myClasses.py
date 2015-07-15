@@ -162,6 +162,10 @@ class fft():
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
+        #normalisation wrt. highest peak
+
+#        schannel = schannel/schannel.max()
+        
         return schannel,v
     def singleChannel2(self,s,highf,zerofill):
         ft =fft()
@@ -215,11 +219,31 @@ class fft():
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
-        
+                
+#        final = final/final.max() # normalise wrt highest peak
+
         return final,v
     def absorbance(self, schannel, refer,highfold,zerofill):
+        """
+        #############################
+        User Function absorbance
+        NB. WORKS ONLY IF A REFERENCE INTERFEROGRAM IS PROVIDED.
+        
+        inputs 4 arguments:
+        
+        schannel = single channel spectrum (no axis necessary, just the data array)
+        refer = the reference, single sided interferogram (cannot calculate absorbance if reference interferogram has not been taken)
+        highfold = high folding limit 
+        zerofill = zerofill factor (eg. 1,2 or 4)
+        
+        returns:
+        
+        1D array containing the absorbance spectrum. 
+        The energy axis is the same as the single channel axis. (in k numbers)
+        
+        """
         ft =fft()
-        refer = ft.singleChannel2(refer,highfold,zerofill)
+        refer = ft.singleChannel(refer,highfold,zerofill)
         absorbance = -np.log10(schannel[0]/refer[0])
         return absorbance[0:absorbance.size/2]
 class fftfilter(fft):
@@ -286,7 +310,7 @@ class fftfilter(fft):
         """
         
         
-        single = s[:0.5*s.size] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
+        single = s[:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
         single0 = ft._zerofill(single,highf,zerofill)
@@ -308,7 +332,7 @@ class fftfilter(fft):
         self.single0 = single0
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
-        
+#         schannel = schannel/schannel.max()
         return schannel,v
     def singleChannel2(self,s,fw,fmin,highf,dv,zerofill):
         ft =fft()
@@ -374,27 +398,35 @@ class fftfilter(fft):
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft2.singleChannel(s, fw, fmin, highf, dv,zerofill)
+        schannel2 = ft2.singleChannel(s[0.5*s.size:], fw, fmin, highf, dv,zerofill)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
-        
-        return final,v
 
-#############################################
-#USER CODE BELOW
-# ft = fft()
-# f = h5py.File("/home/flb41892/data/fringe/Spectrum2.nxs","r") #file to analyse
-# 
-# 
-# s = f["entry1/instrument/interferometer/sample_interferogram_changed_scan"][...] #signal on which to perform FFT and find the single channel spectrum
-# 
-# #ref = f["entry1/instrument/interferometer/reference_scan"][...] #noise signal
-# 
-# # com = f["entry1/instrument/interferometer/sample_changed_scan"][...]# this is the FT of the same file, as performed by opus
-# 
-# # ax = dnp.io.load("/dls/science/groups/das/ExampleData/OpusData/Nexus/BSA low conc T 10x10 line.0.nxs")["/entry1/instrument/interferometer/ratio_absorbance_energy"][...]
-# # refer = f['/entry1/instrument/interferometer/reference_changed_scan'][...]
-# fw = 250
-# fmin = 0.0
-# schannel = ft.singleChannel(s, fw, fmin)
+#        schannel = final/final.max() # normalise wrt highest peak
+
+        return final,v
+    def absorbance2(self, schannel, refer,highfold,zerofill):
+        """
+        #############################
+        User Function absorbance
+        NB. WORKS ONLY IF A REFERENCE INTERFEROGRAM IS PROVIDED.
+        
+        inputs 4 arguments:
+        
+        schannel = single channel spectrum (no axis necessary, just the data array)
+        refer = the reference, double sided interferogram (cannot calculate absorbance if reference interferogram has not been taken)
+        highfold = high folding limit 
+        zerofill = zerofill factor (eg. 1,2 or 4)
+        
+        returns:
+        
+        1D array containing the absorbance spectrum. 
+        The energy axis is the same as the single channel axis. (in k numbers)
+        
+        """
+        ft =fft()
+        refer = ft.singleChannel2(refer,highfold,zerofill)
+        absorbance = -np.log10(schannel[0]/refer[0])
+        return absorbance[0:absorbance.size/2]
+
