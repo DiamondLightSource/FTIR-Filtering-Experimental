@@ -9,33 +9,63 @@ import cmath as m
 class fft():
     def __init__(self):
         pass
-    def _zerofill(self,single,highfold,zerofill):
+    def _zerofill(self,single,highfold,zerofill,ymax,ymaxinterf,yscaling):
         single = single - np.mean(single) # eliminate offset of interferogram
-        if 16384<single.size < 32768:
-        
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(32768-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(65536-single.size)))
-        
-        if 8192<single.size < 16384:
-        
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(16384-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(32768-single.size)))
-        
-        if 4096<single.size < 8192:
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(8192-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(16384-single.size)))
-        
-        if single.size < 4096:
-                if zerofill < 4:
-                    single = np.concatenate((single,np.zeros(4096-single.size)))
-                if zerofill == 4:
-                    single = np.concatenate((single,np.zeros(8192-single.size)))
+        single = single*yscaling*10.0/(ymaxinterf/ymax)
+        if highfold <7900.0:
+            if 16384<single.size < 32768:
+            
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(32768-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(65536-single.size)))
+            
+            if 8192<single.size < 16384:
+            
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(16384-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(32768-single.size)))
+            
+            if 4096<single.size < 8192:
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(8192-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(16384-single.size)))
+            if single.size < 4096:
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(4096-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(8192-single.size)))
+            single = single*2
+        if 7900.0<highfold <15800.0:
+            if 16384<single.size < 32768:
+            
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(32768-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(65536-single.size)))
+            
+            if 8192<single.size < 16384:
+            
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(16384-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(32768-single.size)))
+            
+            if 4096<single.size < 8192:
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(8192-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(16384-single.size)))
+            
+            if single.size < 4096:
+                    if zerofill < 4:
+                        single = np.concatenate((single,np.zeros(4096-single.size)))
+                    if zerofill == 4:
+                        single = np.concatenate((single,np.zeros(8192-single.size)))
+            
+
         return single
     def _mertz(self,single):
         n = 256 # number of points to select for phase correction about ZPD point
@@ -113,7 +143,7 @@ class fft():
         final = np.add(finalr,finali)
         self.apodr = apodr
         return final
-    def singleChannel(self,s,highf,zerofill):
+    def singleChannel(self,s,highf,zerofill,ymax,ymaxinterf,yscaling):
         ft =fft()
         """
         ###############################
@@ -144,7 +174,7 @@ class fft():
         single = s[:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single,highf,zerofill)
+        single0 = ft._zerofill(single,highf,zerofill,ymax,ymaxinterf,yscaling)
         self.sing = single0
         angles = ft._mertz(single0)
         
@@ -162,12 +192,8 @@ class fft():
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        #normalisation wrt. highest peak
-
-#        schannel = schannel/schannel.max()
-        
         return schannel,v
-    def singleChannel2(self,s,highf,zerofill):
+    def singleChannel2(self,s,highf,zerofill,ymax,ymaxinterf,yscaling):
         ft =fft()
         """
         ###############################
@@ -198,14 +224,13 @@ class fft():
         single = s[0.5*s.size:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single,highf,zerofill)
+        single0 = ft._zerofill(single,highf,zerofill,ymax,ymaxinterf,yscaling)
         
         angles = ft._mertz(single0)
         
         single0 = ft._apod(single0)
         
         schannel = ft._fft(single0,angles)
-        
         #calculate the axis in frequency space
         #frequency axis
         lmda = 1/highf#cm (this is the laser waveleght you re using)
@@ -215,15 +240,14 @@ class fft():
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft.singleChannel(s[0.5*s.size:], highf,zerofill)
+        schannel2 = ft.singleChannel(s[0.5*s.size:], highf,zerofill,ymax,ymaxinterf,yscaling)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
                 
-#        final = final/final.max() # normalise wrt highest peak
 
         return final,v
-    def absorbance(self, schannel, refer,highfold,zerofill):
+    def absorbance(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling):
         """
         #############################
         User Function absorbance
@@ -243,7 +267,7 @@ class fft():
         
         """
         ft =fft()
-        refer = ft.singleChannel(refer,highfold,zerofill)
+        refer = ft.singleChannel(refer,highfold,zerofill,ymax,ymaxinterf,yscaling)
         absorbance = -np.log10(schannel[0]/refer[0])
         return absorbance[0:absorbance.size/2]
 class fftfilter(fft):
@@ -270,7 +294,7 @@ class fftfilter(fft):
         self.blh = blh
         self.ap = apod_singler2
         return apod_singler2
-    def singleChannel(self,s,fw,fmin,highf,dv,zerofill):
+    def singleChannel(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling):
         ft =fft()
         ft2=fftfilter()
         """
@@ -313,7 +337,7 @@ class fftfilter(fft):
         single = s[:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single,highf,zerofill)
+        single0 = ft._zerofill(single,highf,zerofill,ymax,ymaxinterf,yscaling)
         
         angles = ft._mertz(single0)
         
@@ -334,7 +358,7 @@ class fftfilter(fft):
         vbig = np.divide(kbig,lmda*np.size(single0))
 #         schannel = schannel/schannel.max()
         return schannel,v
-    def singleChannel2(self,s,fw,fmin,highf,dv,zerofill):
+    def singleChannel2(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling):
         ft =fft()
         ft2 = fftfilter()
         """
@@ -376,10 +400,10 @@ class fftfilter(fft):
         """
         
         
-        single = s[0.5*s.size:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
+        single = s[:0.5*s.size] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
-        single0 = ft._zerofill(single,highf,zerofill)
+        single0 = ft._zerofill(single,highf,zerofill,ymax,ymaxinterf,yscaling)
         
         angles = ft._mertz(single0)
         
@@ -398,7 +422,7 @@ class fftfilter(fft):
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft2.singleChannel(s[0.5*s.size:], fw, fmin, highf, dv,zerofill)
+        schannel2 = ft2.singleChannel(s[0.5*s.size:], fw, fmin, highf, dv,zerofill,ymax,ymaxinterf,yscaling)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
@@ -406,7 +430,7 @@ class fftfilter(fft):
 #        schannel = final/final.max() # normalise wrt highest peak
 
         return final,v
-    def absorbance2(self, schannel, refer,highfold,zerofill):
+    def absorbance2(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling):
         """
         #############################
         User Function absorbance
@@ -426,7 +450,7 @@ class fftfilter(fft):
         
         """
         ft =fft()
-        refer = ft.singleChannel2(refer,highfold,zerofill)
+        refer = ft.singleChannel2(refer,highfold,zerofill,ymax,ymaxinterf,yscaling)
         absorbance = -np.log10(schannel[0]/refer[0])
         return absorbance[0:absorbance.size/2]
 
