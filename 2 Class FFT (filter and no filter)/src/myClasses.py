@@ -11,7 +11,7 @@ class fft():
         pass
     def _zerofill(self,single,highfold,zerofill,ymax,ymaxinterf,yscaling):
         single = single - np.mean(single) # eliminate offset of interferogram
-        single = single*yscaling*10.0/(ymaxinterf/ymax)
+        single = single*yscaling/(ymaxinterf/ymax)
         if highfold <7900.0:
             if 16384<single.size < 32768:
             
@@ -143,7 +143,7 @@ class fft():
         final = np.add(finalr,finali)
         self.apodr = apodr
         return final
-    def singleChannel(self,s,highf,zerofill,ymax,ymaxinterf,yscaling):
+    def singleChannel(self,s,highf,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         ft =fft()
         """
         ###############################
@@ -191,9 +191,10 @@ class fft():
         self.dv = v[100]-v[99]
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
-        
+        schannel = schannel/(schannel.max()/ymaxspect)
+
         return schannel,v
-    def singleChannel2(self,s,highf,zerofill,ymax,ymaxinterf,yscaling):
+    def singleChannel2(self,s,highf,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         ft =fft()
         """
         ###############################
@@ -240,14 +241,15 @@ class fft():
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft.singleChannel(s[0.5*s.size:], highf,zerofill,ymax,ymaxinterf,yscaling)
+        schannel2 = ft.singleChannel(s[0.5*s.size:], highf,zerofill,ymax,ymaxinterf,yscaling,ymaxspect)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
                 
+        final = final/(final.max()/ymaxspect)
 
         return final,v
-    def absorbance(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling):
+    def absorbance(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         """
         #############################
         User Function absorbance
@@ -267,7 +269,7 @@ class fft():
         
         """
         ft =fft()
-        refer = ft.singleChannel(refer,highfold,zerofill,ymax,ymaxinterf,yscaling)
+        refer = ft.singleChannel(refer,highfold,zerofill,ymax,ymaxinterf,yscaling,ymaxspect)
         absorbance = -np.log10(schannel[0]/refer[0])
         return absorbance[0:absorbance.size/2]
 class fftfilter(fft):
@@ -294,7 +296,7 @@ class fftfilter(fft):
         self.blh = blh
         self.ap = apod_singler2
         return apod_singler2
-    def singleChannel(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling):
+    def singleChannel(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         ft =fft()
         ft2=fftfilter()
         """
@@ -356,9 +358,9 @@ class fftfilter(fft):
         self.single0 = single0
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
-#         schannel = schannel/schannel.max()
+        schannel = schannel/(schannel.max()/ymaxspect)
         return schannel,v
-    def singleChannel2(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling):
+    def singleChannel2(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         ft =fft()
         ft2 = fftfilter()
         """
@@ -422,15 +424,15 @@ class fftfilter(fft):
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         
-        schannel2 = ft2.singleChannel(s[0.5*s.size:], fw, fmin, highf, dv,zerofill,ymax,ymaxinterf,yscaling)
+        schannel2 = ft2.singleChannel(s[0.5*s.size:], fw, fmin, highf, dv,zerofill,ymax,ymaxinterf,yscaling,ymaxspect)
         final = np.add(schannel,schannel2[0])
         final = np.true_divide(final,2)
         self.single2 = single0
 
-#        schannel = final/final.max() # normalise wrt highest peak
+        final = final/(final.max()/ymaxspect)
 
         return final,v
-    def absorbance2(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling):
+    def absorbance2(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         """
         #############################
         User Function absorbance
@@ -450,7 +452,7 @@ class fftfilter(fft):
         
         """
         ft =fft()
-        refer = ft.singleChannel2(refer,highfold,zerofill,ymax,ymaxinterf,yscaling)
+        refer = ft.singleChannel2(refer,highfold,zerofill,ymax,ymaxinterf,yscaling,ymaxspect)
         absorbance = -np.log10(schannel[0]/refer[0])
         return absorbance[0:absorbance.size/2]
 

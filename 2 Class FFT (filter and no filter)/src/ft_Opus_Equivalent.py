@@ -9,10 +9,7 @@ from myClasses import fft
 ft = fft()
 
 
-
-
-    
-f = h5py.File("/home/flb41892/data/Nexus different parameters/NLC off Res2 ZF1 HFL 7899 PR32.0.nxs","r")
+f = h5py.File("/home/flb41892/data/Nexus different parameters/NLC on Res2 ZF4 HFL7899 PR32.0.nxs","r")
 s = f["entry1/instrument/interferometer/sample_interferogram_scan"][...] #signal on which to perform FFT
 #ref = f["entry1/instrument/interferometer/reference_scan"][...] #noise signal
 highfold = f['/entry1/instrument/interferometer/opus_parameters/instrument/high_folding_limit'][...]
@@ -25,36 +22,68 @@ rint = f['/entry1/instrument/interferometer/reference_interferogram_scan'][...] 
 com = f["entry1/instrument/interferometer/sample_scan"][...]# this is the FT of the same file, as performed by opus
 
 axis  = f["entry1/instrument/interferometer/sample_energy"][...] #signal on which to perform FFT
+
+ymax = f['/entry1/instrument/interferometer/opus_parameters/sample_data_interferogram/y_maximum'][...]
+yscaling = f['/entry1/instrument/interferometer/opus_parameters/sample_data_interferogram/y_scaling_factor'][...]
+ymaxspect = f['/entry1/instrument/interferometer/opus_parameters/sample_data/y_maximum'][...]
 #n = 13 #choose the index of the interferogram you want to analyse
 com = com[:]
 single = s[0:0.5*s[:].size] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
 #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
 single = single - np.mean(single) # eliminate offset of interferogram
-if 16384<single.size < 32768:
-
-        if zerofill < 4:
-            single = np.concatenate((single,np.zeros(32768-single.size)))
-        if zerofill == 4:
-            single = np.concatenate((single,np.zeros(65536-single.size)))
-
-if 8192<single.size < 16384:
-
-        if zerofill < 4:
-            single = np.concatenate((single,np.zeros(16384-single.size)))
-        if zerofill == 4:
-            single = np.concatenate((single,np.zeros(32768-single.size)))
-
-if 4096<single.size < 8192:
-        if zerofill < 4:
-            single = np.concatenate((single,np.zeros(8192-single.size)))
-        if zerofill == 4:
-            single = np.concatenate((single,np.zeros(16384-single.size)))
-
-if single.size < 4096:
-        if zerofill < 4:
-            single = np.concatenate((single,np.zeros(4096-single.size)))
-        if zerofill == 4:
-            single = np.concatenate((single,np.zeros(8192-single.size)))
+single = single*yscaling/(s.max()/ymax)
+if highfold <7900.0:
+    if 16384<single.size < 32768:
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(32768-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(65536-single.size)))
+    if 8192<single.size < 16384:
+    
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(16384-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(32768-single.size)))
+    
+    if 4096<single.size < 8192:
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(8192-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(16384-single.size)))
+    
+    if single.size < 4096:
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(4096-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(8192-single.size)))
+    single = np.multiply(single,2.0)
+if 7900.0<highfold <15800.0:
+    if 16384<single.size < 32768:
+    
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(32768-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(65536-single.size)))
+    
+    if 8192<single.size < 16384:
+    
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(16384-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(32768-single.size)))
+    
+    if 4096<single.size < 8192:
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(8192-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(16384-single.size)))
+    
+    if single.size < 4096:
+            if zerofill < 4:
+                single = np.concatenate((single,np.zeros(4096-single.size)))
+            if zerofill == 4:
+                single = np.concatenate((single,np.zeros(8192-single.size)))
+    
 
 #phase correction -Mertz method
 n = 256 # number of points to select for phase correction about ZPD point
@@ -107,12 +136,7 @@ fim= np.imag(trans)
 phi = np.arctan(np.divide(fim,freal))
 cphi = np.cos(phi)
 sphi = np.sin(phi)
-#extend phase arrays to match interferogram arrays(interpolation)
-xp = np.arange(0,2*n)
-x = np.arange(0,2*n,512./single.size)
-cphi2 = np.interp(x,xp,cphi)
-sphi2 = np.interp(x,xp,sphi)
-#power spectrum
+
 
 pw = np.sqrt(np.add(np.square(freal) , np.square(fim)))
 
@@ -169,6 +193,15 @@ apod_singler2 = np.multiply(apod_singler2,exp)
     #FFT the interferogram which was previously apodized and rotated
     
 
+
+#extend phase arrays to match interferogram arrays(interpolation)
+xp = np.arange(0,2*n)
+x = np.arange(0,2*n,512./single.size)
+cphi2 = np.interp(x,xp,cphi)
+sphi2 = np.interp(x,xp,sphi)
+#power spectrum
+
+
 output_axis1 = np.size(apod_singler)
 apodfi = np.fft.fft(apod_singler, output_axis1)
 apodr = np.real(apodfi)
@@ -187,12 +220,11 @@ finali2 = np.multiply(apodi2,sphi2)
 
 final = np.add(finalr,finali)
 
-
 final2 = np.add(finalr2,finali2)
 
 #average two sided interferogram results
-schannel = ft.singleChannel(s[0.5*s.size:], highfold,zerofill)
-final = np.add(final2,schannel[0])
+schannel = ft.singleChannel(s[0:0.5*s[:].size], highfold,zerofill,ymax,s.max(),yscaling,ymaxspect)
+final = np.add(final,schannel[0])
 final = np.true_divide(final,2)
 
 a = np.add(schannel[1],-axis[0])
@@ -202,15 +234,16 @@ b = np.add(schannel[1],-axis[axis.size-1])
 b = np.abs(b)
 b = b.argmin()
 full = final
-final = final[a-1:b+1]
+final = final[a-1:b+1]  
 
-refer = ft.singleChannel2(rint,highfold,zerofill)
+refer = ft.singleChannel2(rint,highfold,zerofill,ymax,s.max(),yscaling,ymaxspect)
 absorbance = -np.log10(schannel[0]/refer[0])
 
 #normalisation wrt. highest peak
 
-final = final/final.max()
-plt.plot(final)
+
+plt.plot(final*ymaxspect/final.max())
+plt.plot(com)
 plt.show()
 
 #comparison with Opus FFT
