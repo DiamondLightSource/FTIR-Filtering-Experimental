@@ -5,11 +5,12 @@ import cmath as m
 from scipy import signal
 import pylab
 from myClasses import fft
+matplotlib.rcParams.update( {'font.size':22})
 
 ft = fft()
 
 
-f = h5py.File("/home/flb41892/data/Nexus different parameters/NLC on Res2 ZF4 HFL7899 PR32.0.nxs","r")
+f = h5py.File("/home/flb41892/data/Nexus different parameters/NLC on Res8 ZF4 HFL 7899 PR16.0.nxs","r")
 s = f["entry1/instrument/interferometer/sample_interferogram_scan"][...] #signal on which to perform FFT
 #ref = f["entry1/instrument/interferometer/reference_scan"][...] #noise signal
 highfold = f['/entry1/instrument/interferometer/opus_parameters/instrument/high_folding_limit'][...]
@@ -97,7 +98,7 @@ N = 2*n
 w = np.zeros(N)
 w2 = np.zeros(N)
 j = 0
-for j in range(0,N):
+for j in np.arange(0,N):
     w[j] = 0.44959-.49364*np.cos(2*m.pi*j/N)+.05677*np.cos(4*m.pi*j/N)
     w2[j] = 0.42323-.49755*np.cos(2*m.pi*j/N)+.07922*np.cos(4*m.pi*j/N)
 zeros = zeros*ramp #mpllultiply zeros array by ramp fcn to prepare array for phase correction
@@ -147,7 +148,7 @@ fimp = fim*pw
 
 apodf = np.zeros(single.size) #61dB
 apodf2 = np.zeros(single.size) #67 dB
-for j in range(0,single.size):
+for j in np.arange(0,single.size):
     apodf[j] = 0.44959-.49364*np.cos(2*m.pi*j/single.size)+.05677*np.cos(4*m.pi*j/single.size)
     apodf2[j] = 0.42323-.49755*np.cos(2*m.pi*j/single.size)+.07922*np.cos(4*m.pi*j/single.size)
 
@@ -241,9 +242,10 @@ absorbance = -np.log10(schannel[0]/refer[0])
 
 #normalisation wrt. highest peak
 
-
-plt.plot(final*ymaxspect/final.max())
-plt.plot(com)
+z = 130
+plt.plot(axis[z:],final[z:]*ymaxspect/final.max(),linewidth = 2.5, label = 'Spectrum produced by FTIR Tool')
+#plt.plot(axis[z:],com[z:], linewidth = 2.5, label = 'Spectrum produced by Opus Commercial Software')
+#plt.legend(loc = 'upper left')
 plt.show()
 
 #comparison with Opus FFT

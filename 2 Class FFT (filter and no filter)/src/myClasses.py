@@ -222,7 +222,7 @@ class fft():
         """
         
         
-        single = s[0.5*s.size:] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
+        single = s[0.5*np.size(s):] #in case of bifringent interferogram, take only one peak to analyse (avoids sinusoidal modulations)
         #zero filling(pad until 16,384 if array is below this number and up to 65536 points if array is larger)
         
         single0 = ft._zerofill(single,highf,zerofill,ymax,ymaxinterf,yscaling)
