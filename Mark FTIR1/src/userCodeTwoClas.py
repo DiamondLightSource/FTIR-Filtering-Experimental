@@ -18,12 +18,12 @@ matplotlib.rcParams.update( {'font.size':22})
 #VARIABLES
 ft = fft()
 ft2 = fftfilter()
-f = h5py.File('/home/flb41892/data/markmapping /4 scan 3 00um.0.hdf5',"r") # load you nexus file here
+f = h5py.File('/home/flb41892/data/markmapping /rotation/no shift rot result v2.hdf5',"r") # load you nexus file here
 f1 = h5py.File("/home/flb41892/data/markmapping /4 scan 3 00um.0.hdf5","r")
 f2 = h5py.File('/home/flb41892/data/markmapping /rotation/rot result v2.hdf5','r') # load you nexus file here
-s = f['/Data/SampleInterferogram/yfolded'][...] #signal on which to perform FFT
+s = f['/SampleInterferogram'][...] #signal on which to perform FFT
 #com = f["/Data/Sample/yfolded"][...]# this is the FT of the same file, as performed by opus
-refer = f['/Data/ReferenceInterferogram/yfolded'][...] #reference scan
+refer = f['/ReferenceInterferogram'][...] #reference scan
 s2 = f2["/SampleInterferogram"][...]
 dim = np.shape(s)
 spectra = np.zeros((dim[0],dim[1],389))

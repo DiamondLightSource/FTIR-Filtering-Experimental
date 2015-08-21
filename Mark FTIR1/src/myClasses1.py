@@ -297,7 +297,7 @@ class fft():
         self.schannel2 = schannel2
         self.schannel = schannel
         self.final = final
-
+        final = np.abs(final)
         return final,v
     def absorbance(self, schannel, refer,highfold,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         """
@@ -419,6 +419,7 @@ class fftfilter(fft):
         kbig = np.arange(np.size(single0))
         vbig = np.divide(kbig,lmda*np.size(single0))
         schannel = schannel/(schannel.max()/ymaxspect)
+        schannel = np.abs(schannel)
         return schannel,v
     def singleChannel2(self,s,fw,fmin,highf,dv,zerofill,ymax,ymaxinterf,yscaling,ymaxspect):
         ft =fft()
